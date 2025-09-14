@@ -1,0 +1,471 @@
+{
+  "name": "test2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2496,
+        96
+      ],
+      "id": "4f07aa0e-6045-47df-aa49-aef934d60139",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.identifier }}",
+                    "rightValue": "tiktok",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3ff74ffe-3f82-437d-9218-bce4f7551211"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "tiktok"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2edc7f5f-18cf-45e2-9a10-03c6ee2a062f",
+                    "leftValue": "={{ $json.identifier }}",
+                    "rightValue": "youtube",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "youtube"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f461c331-7506-486b-ab4a-de03823f82f9",
+                    "leftValue": "={{ $json.identifier }}",
+                    "rightValue": "instagram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "instagram"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1392,
+        96
+      ],
+      "id": "6bf25091-45a5-4507-8fe4-cdab202bd1de",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f5772c0-1f84-45e9-b131-8be1c8dd6d85",
+              "name": "postiz_api",
+              "value": "https://api.postiz.com/public/v1",
+              "type": "string"
+            },
+            {
+              "id": "781d5f1b-1724-4cd4-9e0d-916de65b43e5",
+              "name": "share_video_url",
+              "value": "https://v3.fal.media/files/elephant/KXtCm9W7FDhP9ak0tr_9I_cad8546e-4008-4a4b-a630-a492854d051e_output.mp4",
+              "type": "string"
+            },
+            {
+              "id": "f3d9536a-3dc9-4673-b774-0434ca64575f",
+              "name": "share_title",
+              "value": "Summer is coming",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2240,
+        96
+      ],
+      "id": "317b4393-9156-4cae-8a09-59f22f63689c",
+      "name": "Configure me"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.share_video_url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2016,
+        96
+      ],
+      "id": "894de72e-9677-4149-8901-f851f36df31a",
+      "name": "Download video"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configure me').item.json.postiz_api }}/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "test",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1792,
+        96
+      ],
+      "id": "10d69e8d-2d2e-4da6-ba1f-b201d84c40be",
+      "name": "Upload video to Postiz",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "s6uhylnklZZ5COuR",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configure me').item.json.postiz_api }}/integrations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1600,
+        96
+      ],
+      "id": "df419da8-8ca9-4663-98d3-19c0036c8de1",
+      "name": "Get Postiz integrations",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "s6uhylnklZZ5COuR",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configure me').item.json.postiz_api }}/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"schedule\",\n  \"date\": \"{{ $now.plus(1, 'days').toISO() }}\",\n  \"tags\": [],\n  \"shortLink\": false,\n  \"posts\": [\n    {\n      \"integration\": {\n        \"id\": \"{{ $('Switch').item.json.id }}\"\n      },\n      \"value\": [\n        {\n          \"content\": \"{{ $('Configure me').item.json.share_title }}\",\n          \"image\": [\n            {\n              \"id\": \"{{ $('Upload video to Postiz').item.json.id }}\",\n              \"path\": \"{{ $('Upload video to Postiz').item.json.path }}\"\n            }\n          ]\n        }\n      ],\n      \"settings\": {\n        \"title\": \"{{ $('Configure me').item.json.share_title }}\",\n        \"type\": \"public\"\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -752,
+        64
+      ],
+      "id": "b50de224-5925-4fa9-8a80-59976e9c365a",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "s6uhylnklZZ5COuR",
+          "name": "Header Auth account"
+        },
+        "httpBearerAuth": {
+          "id": "CtuFnlxRAT5kqUKK",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6edb3f17-3d22-408b-a935-5e9f59fa6cc5",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1152,
+        96
+      ],
+      "id": "2ffe0ee1-6a2e-49ab-b157-9066caeb21e4",
+      "name": "YouTube check"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6edb3f17-3d22-408b-a935-5e9f59fa6cc5",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1152,
+        -176
+      ],
+      "id": "33c013bd-4f22-4d88-8f5d-7bc28084a27a",
+      "name": "TikTok check"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6edb3f17-3d22-408b-a935-5e9f59fa6cc5",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1152,
+        336
+      ],
+      "id": "a25889ec-4d69-4d08-89b2-540517d941a8",
+      "name": "Instagram check"
+    },
+    {
+      "parameters": {
+        "content": "## Implement your logic here\n\nShare on the social media integrations you select",
+        "height": 800,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        -320
+      ],
+      "id": "fd0ca1bd-2b2e-45e0-97f7-63c65670527e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# Schedule the post",
+        "height": 280,
+        "width": 360,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        -64
+      ],
+      "id": "59b62e1e-cc42-43a4-8f65-57aedf6787cf",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Configure me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "TikTok check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "YouTube check",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Instagram check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configure me": {
+      "main": [
+        [
+          {
+            "node": "Download video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download video": {
+      "main": [
+        [
+          {
+            "node": "Upload video to Postiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload video to Postiz": {
+      "main": [
+        [
+          {
+            "node": "Get Postiz integrations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Postiz integrations": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube check": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5e2a0a88-34e8-46ef-8bb8-3403e58e8288",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "719db70b056f2f10d24bd5e4388aebb11b4375c631ec45a842053a65c944cdf1"
+  },
+  "id": "5tzPGyUaLSZIFsNf",
+  "tags": []
+}

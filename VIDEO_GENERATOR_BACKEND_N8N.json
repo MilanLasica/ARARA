@@ -1,0 +1,2275 @@
+{
+  "name": "test1",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Create a UGC-like video from a Shopify product",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Shopify store URL",
+              "placeholder": "Add the full shopify URL here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Search term",
+              "placeholder": "What search term we should use to find a product?",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -1392,
+        -1264
+      ],
+      "id": "61ef3f00-fbee-427a-a0f0-017f85f45dd0",
+      "name": "On form submission",
+      "webhookId": "39b9f0f9-f469-4df0-82fc-5239911d77c5"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Setup defaults').first().json.SHOPIFY_URL }}/products.json?limit=250&page={{ $('Setup defaults').last().json.page }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        -1264
+      ],
+      "id": "0614086b-3c7b-4d60-83d0-b291ef0b5031",
+      "name": "Get the products from the Shopify store"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d55d6da-a78c-4a28-9343-0ea9035a0aa3",
+              "name": "SHOPIFY_URL",
+              "value": "={{   ((u) => {   let s = u.trim();   if (!/^https?:\\/\\//i.test(s)) s = 'https://' + s;   const parts = s.split('/');   return parts[0] + '//' + parts[2]; })($('On form submission').first().json['Shopify store URL'])  }}",
+              "type": "string"
+            },
+            {
+              "id": "2915c500-dadd-414d-b49c-e4034ae4110d",
+              "name": "max_pages",
+              "value": 5,
+              "type": "number"
+            },
+            {
+              "id": "0d9bab79-3790-43e3-a338-8428daa23a3d",
+              "name": "max_products",
+              "value": 50,
+              "type": "number"
+            },
+            {
+              "id": "2ae82e10-3fd1-48ab-863c-dd98ad1688a8",
+              "name": "products",
+              "value": "={{ $json.products || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "c7cbc705-4029-4a50-835d-1ebffc2a1fa7",
+              "name": "page",
+              "value": "={{ $json.page || 1 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1104,
+        -1264
+      ],
+      "id": "dd765648-c980-40e6-a41b-aa92c2346c9e",
+      "name": "Setup defaults"
+    },
+    {
+      "parameters": {
+        "content": "# 1. Select product",
+        "height": 320,
+        "width": 1700
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        -1376
+      ],
+      "id": "776fbbaf-3540-4c9e-99ce-1c8c09e0e1e2",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1376,
+        -864
+      ],
+      "id": "ac6f2c98-3940-47cf-a7c0-f0767e0ec860",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Tm9wvTiZ7FllSYyQ",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        -112
+      ],
+      "id": "1efc8c8e-f954-4be8-b57f-18b436f05b8e",
+      "name": "Wait for the image",
+      "webhookId": "385de300-af3f-4db6-b9c8-23b2122a68a7"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Start generating the image').item.json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        -112
+      ],
+      "id": "93ccc889-361f-4793-9ee9-cba22c74c4b7",
+      "name": "Get the image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "COMPLETED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6fc5bea4-1567-474b-bfca-5394eb303217"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COMPLETED"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0882f634-2472-4d24-a1c3-a39f0cd94855",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "IN_PROGRESS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IN_PROGRESS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e6c8b207-13ac-4537-8c5c-677039bc2fef",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "IN_QUEUE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IN_QUEUE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        160,
+        -112
+      ],
+      "id": "f4096dd2-a681-4fae-a343-959ef1c925e8",
+      "name": "Image status"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Start generating the image').item.json.response_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        -80
+      ],
+      "id": "40aab9fd-34c2-4e56-b32a-3585578f717e",
+      "name": "Download the image",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/flux-pro/kontext/max/multi",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.output.image_prompt }}\",\n  \"image_urls\": {{ JSON.stringify($('Aggregate base64').item.json.base64) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -496,
+        -112
+      ],
+      "id": "6290d3e3-5433-465c-88c8-26baa349117c",
+      "name": "Start generating the image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        },
+        "httpBearerAuth": {
+          "id": "CtuFnlxRAT5kqUKK",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/bytedance/seedance/v1/lite/image-to-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $('Generate prompts').item.json.output.video_prompt }}"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ $json.images[0].url }}"
+            },
+            {
+              "name": "end_image_url",
+              "value": "={{ $json.images[0].url }}"
+            },
+            {
+              "name": "resolution",
+              "value": "480p"
+            },
+            {
+              "name": "duration",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        -112
+      ],
+      "id": "f078ec9d-60e5-4b06-abd5-309f8d274b3f",
+      "name": "Start generating the video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2c3a90c7-f43a-47b3-bec7-77fdae122bfc",
+              "name": "product",
+              "value": "={{ $('Limits exceeded?').last().json.products.find(item => item.title === $json.Product) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        -1296
+      ],
+      "id": "226e4280-a3f2-4003-83c5-d79ab7e69e46",
+      "name": "Setup product"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        -112
+      ],
+      "id": "6ba6fa6d-3790-44b4-a9ca-e664211dce1a",
+      "name": "Wait for the video",
+      "webhookId": "20df58f7-73b4-451f-8683-cf34eb4b6cfd"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Start generating the video').item.json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        -112
+      ],
+      "id": "f348d511-dfab-4022-9686-4d158d049388",
+      "name": "Get the video status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "COMPLETED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6fc5bea4-1567-474b-bfca-5394eb303217"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COMPLETED"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0882f634-2472-4d24-a1c3-a39f0cd94855",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "IN_PROGRESS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IN_PROGRESS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e6c8b207-13ac-4537-8c5c-677039bc2fef",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "IN_QUEUE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IN_QUEUE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1440,
+        -112
+      ],
+      "id": "bc5d2028-92f7-4e92-b2cc-c79492561df5",
+      "name": "Video status"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Start generating the video').item.json.response_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        -80
+      ],
+      "id": "8ff93767-9673-41de-834d-bf6b1b1495d6",
+      "name": "Get the  video",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -688,
+        288
+      ],
+      "id": "7b1e7c99-abaf-4500-8b03-5b72af6c4fbb",
+      "name": "Wait for the speech",
+      "webhookId": "900ad265-63ec-4840-aae6-7de08f4d9d14"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Start generating the speech').item.json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -512,
+        288
+      ],
+      "id": "2a05594f-af80-475b-90ff-34b13e1c52fa",
+      "name": "Get the speech status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/elevenlabs/tts/turbo-v2.5",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $('Generate prompts').item.json.output.dialogue }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -912,
+        288
+      ],
+      "id": "fe20cd54-9c86-4be3-a5fc-7bb3c7e69507",
+      "name": "Start generating the speech",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "COMPLETED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6fc5bea4-1567-474b-bfca-5394eb303217"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COMPLETED"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0882f634-2472-4d24-a1c3-a39f0cd94855",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "IN_PROGRESS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IN_PROGRESS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e6c8b207-13ac-4537-8c5c-677039bc2fef",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "IN_QUEUE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IN_QUEUE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -336,
+        288
+      ],
+      "id": "0d1744b0-a7f5-49a0-af98-7c9844ee125c",
+      "name": "Speech status"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Start generating the speech').item.json.response_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -48,
+        336
+      ],
+      "id": "dfc1ce56-2884-4909-ad14-afdd33ddb9ce",
+      "name": "Get the speech",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/latentsync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "video_url",
+              "value": "={{ $('Get the  video').item.json.video.url }}"
+            },
+            {
+              "name": "audio_url",
+              "value": "={{ $json.audio.url }}"
+            },
+            {
+              "name": "loop_mode",
+              "value": "loop"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        288
+      ],
+      "id": "b523c3a2-2077-4faa-9ab4-e5a63d0fb822",
+      "name": "Start generating the lipsync",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        288
+      ],
+      "id": "e0513ffe-b619-42d9-92eb-af58272dce3c",
+      "name": "Wait for the lipsync",
+      "webhookId": "d21191bf-cc1c-4fd6-a08d-d01ce6c8108d"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Start generating the lipsync').item.json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        752,
+        288
+      ],
+      "id": "172b1c29-0638-49aa-8f67-64adc54eeb73",
+      "name": "Get the lipsync status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "COMPLETED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6fc5bea4-1567-474b-bfca-5394eb303217"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COMPLETED"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0882f634-2472-4d24-a1c3-a39f0cd94855",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "IN_PROGRESS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IN_PROGRESS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e6c8b207-13ac-4537-8c5c-677039bc2fef",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "IN_QUEUE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IN_QUEUE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        992,
+        288
+      ],
+      "id": "8d012183-5a95-450c-895d-a38a26399ce4",
+      "name": "Lipsync status"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Start generating the lipsync').item.json.response_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        336
+      ],
+      "id": "1d66fb04-7fcd-4015-b04a-94f35ff2e351",
+      "name": "Get the lipsync video",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "IWOCrJboduG9ypPa",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = [...$('Setup defaults').last().json.products];\n\nfor (const item of $input.all()) {\n  if (\n    `${item.json.title} ${item.json.body_html}`.toLowerCase()\n      .includes(\n        $('On form submission').first().json['Search term'].toLowerCase()\n      )\n  ) {\n    products.push(item.json);  \n  }\n}\n\nreturn {\n  json: {\n    products,\n    page: $('Setup defaults').last().json.page + 1\n  }\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        -1264
+      ],
+      "id": "20e386e9-eca1-40db-ac58-9c0b84b523a3",
+      "name": "Edit loop variables"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "products",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        -1264
+      ],
+      "id": "4e052cb1-50ad-417d-9e75-5bb64c122581",
+      "name": "For each product"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9fdf17cd-63a3-4f2c-941f-5daa61d9a35c",
+              "leftValue": "={{ $json.page }}",
+              "rightValue": "={{ $('Setup defaults').first().json.max_pages }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "958d42f5-27e4-4ff4-82d0-80d7f31c2771",
+              "leftValue": "={{ $json.products }}",
+              "rightValue": "={{ $('Setup defaults').first().json.max_products }}",
+              "operator": {
+                "type": "array",
+                "operation": "lengthGte",
+                "rightType": "number"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -352,
+        -1264
+      ],
+      "id": "efdf3ae4-c257-432a-b129-48b2fb56b306",
+      "name": "Limits exceeded?"
+    },
+    {
+      "parameters": {
+        "defineForm": "json",
+        "jsonOutput": "=[\n   {\n      \"fieldLabel\": \"Product\",\n      \"requiredField\": true,\n      \"fieldType\": \"dropdown\",\n      \"fieldOptions\": {\n        \"values\": {{ JSON.stringify($json.products.map(item => { return {option: `${item.title}`} })) }}\n      }\n   }\n]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -1296
+      ],
+      "id": "d80fa46f-1962-49cb-86aa-6873a9fa7293",
+      "name": "Select product",
+      "webhookId": "02870f80-3c7b-4444-b8a5-5c433f3f91fc"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Sit tight!",
+        "completionMessage": "We are generating the video for you, it could take up to 5 minutes",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        352,
+        -1232
+      ],
+      "id": "a7d19e96-cfcc-4177-8051-3fc99fb8453e",
+      "name": "Close the form",
+      "webhookId": "ccd96940-1401-43a8-9671-4086def029d4"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.selected_images }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1136,
+        -496
+      ],
+      "id": "e791d412-8b40-4afe-b481-726e44fefd4c",
+      "name": "Download image"
+    },
+    {
+      "parameters": {
+        "operation": "resize",
+        "width": 800,
+        "height": 800,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.editImage",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        -496
+      ],
+      "id": "b82be2d7-a395-4fc2-a911-fa6a89938d1c",
+      "name": "Resize image"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        -496
+      ],
+      "id": "6a80e739-e82a-45bf-bf3a-048c134d752b",
+      "name": "Convert image to base64"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9136d2ce-9e89-4ee6-9a0b-bef338199bb5",
+              "name": "base64",
+              "value": "=data:image/{{ ((u)=>{let e=u.split('.').pop().split('?')[0]; return e==='jpg'?'jpeg':e})($('Split Out').last().json.selected_images) }};base64,{{ $json.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1616,
+        -496
+      ],
+      "id": "402b1dc0-b837-4495-ac29-545a67dc100b",
+      "name": "Set base64 data"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "base64"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        -496
+      ],
+      "id": "ea65dfe5-45aa-4b6c-b85c-252e0862789b",
+      "name": "Aggregate base64"
+    },
+    {
+      "parameters": {
+        "content": "# 2. Setup images",
+        "height": 680,
+        "width": 3080
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        -992
+      ],
+      "id": "ee29e22d-250e-4ff7-90b4-2a8341605c31",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# 3. Generate prompts + dialogue",
+        "height": 360,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        -256
+      ],
+      "id": "300ce8c9-d223-4e64-846e-7f6734d8cead",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<Instructions>\nI'm working on creating a UGC (user generated content) ad for a fashion ecommerce product item.\n\nOur goal is to create a scene, where we can build a 5s long video that can easily be looped. That means, that the background should be still, and the character should be standing and talking to the camera.\n\nCreate the following items:\n\n1. An image prompt\n\nCreate an image prompt, that describes the background, and since the AI image generator receives the reference image, it should say to wear the item from the image. Have the character stand at a very slight angle to the camera. Give the character a slight smile. Include in the image prompt, that any text, illustration, signature, frame or border should be removed. Also include, that the main character should be looking into the camera.\n\n2. Dialogue for the main character\n\nCreate a dialogue that's about 550 characters long, and talks about the item. Use the product description, and the reference image.\nThe dialogue should sound natural, like an amateur product review.\n\n3. Video prompt\nA detailed description of the 5s long clip, that will be looped. The character should be visibly speaking in the video, with a slight smile.\nThe emotion of the character should not change during the full length of the clip.\nWe want the character to be in a very natural pose, arms resting naturally at the sides, both feet planted on the ground.\nStart the clip with the weight on one foot and shift it to the other one very very slowly and naturally, then shift it back.\nInclude in the video prompt, that nothing should move behind the character, should be no lifting of the feet, and no excessive turning, knee bending, arm movements, or any other odd movements. \nInclude in the video prompt that the clip should contain minimal camera movement, zoom in or out. \n\n4. The sex of the person on the attached image\n\n</Instructions>\n\n<FashionItem>\n# {{ $('Setup product').item.json.product.title }}\n\n{{ $('Markdown').item.json.body }}\n</FashionItem>",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "messageType": "imageUrl",
+              "imageUrl": "={{ $('Did we reach the limit?').last().json.selected_images[0] }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -1104,
+        -96
+      ],
+      "id": "bb1c8f19-bed5-40fe-90ac-0ada9276b9a0",
+      "name": "Generate prompts",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n    \"type\": \"object\",\n    \"properties\": {\n        \"image_prompt\": {\n            \"type\": \"string\",\n            \"description\": \"The image prompt for the AI image generation\"\n        },\n        \"dialogue\": {\n            \"type\": \"string\",\n            \"description\": \"The dialogue that the main character should be saying to the camera\"\n        },\n        \"video_prompt\": {\n            \"type\": \"string\",\n            \"description\": \"The video prompt, that we are going to use to generate the video starting and finishing with the generated image\"\n        },\n        \"sex\": {\n            \"type\": \"string\",\n            \"description\": \"The sex of the person on the attached image\"\n        }\n    },\n    \"required\": [\n        \"image_prompt\",\n        \"dialogue\",\n        \"video_prompt\",\n        \"sex\"\n    ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -752,
+        -160
+      ],
+      "id": "c4d0ac4e-2b86-4ce9-b096-7ed5a79c3088",
+      "name": "Structured Output Parser for prompt generation"
+    },
+    {
+      "parameters": {
+        "content": "# 4. Generate the main image",
+        "height": 360,
+        "width": 1140
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -256
+      ],
+      "id": "c9df061f-3514-4d6c-83c6-88c09ce3bd1d",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# 5. Generate the looping video",
+        "height": 360,
+        "width": 1200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        672,
+        -256
+      ],
+      "id": "b97b4619-8197-476d-a793-24cbd43b2f43",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# 6. Generate speech",
+        "height": 340,
+        "width": 1260
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        176
+      ],
+      "id": "afaae464-24ff-4234-867b-56d5c54ab770",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# 7. Generate lipsync",
+        "height": 340,
+        "width": 1300
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        176,
+        176
+      ],
+      "id": "151ba345-ecac-4bb9-8fda-c09f808378d9",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.video.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1632,
+        304
+      ],
+      "id": "abaf3f44-8794-4301-b066-c8b8681a5d7e",
+      "name": "Download the video"
+    },
+    {
+      "parameters": {
+        "content": "# 🎉 Here's the generated video",
+        "height": 340,
+        "width": 400,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        176
+      ],
+      "id": "38be7714-6cc3-45c4-a240-9c7c460011d1",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bcbc506b-434c-4738-9a63-dd38efcace4f",
+              "name": "voice",
+              "value": "={{ $('Generate prompts').item.json.sex === \"female\" ? \"Aria\" : \"Roger\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1104,
+        288
+      ],
+      "id": "5a1d22d9-aefa-42d2-856a-4ec3c889d010",
+      "name": "Set the voice based on sex"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.product.body_html }}",
+        "destinationKey": "body",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -1296
+      ],
+      "id": "0133a44d-cc2a-49c9-9c91-30dbecb0fb93",
+      "name": "Markdown"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e644bc63-a4ad-476a-9abd-c2e43e748bc7",
+              "leftValue": "={{ $json.product.images }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "array",
+                "operation": "lengthEquals",
+                "rightType": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1104,
+        -880
+      ],
+      "id": "41520f1b-fb85-45fe-a8fd-b43ec185e6cd",
+      "name": "no images"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b623894a-44da-4a24-9dc0-47754ac2945f",
+              "name": "images",
+              "value": "={{ $json.images || $json.product.images.filter(image => image.width > 200) }}",
+              "type": "array"
+            },
+            {
+              "id": "116430be-b1a8-4152-b7cb-3891e534aca2",
+              "name": "selected_images",
+              "value": "={{ $json.selected_images || [] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -832,
+        -800
+      ],
+      "id": "04dfb10a-c1b1-42c4-82ee-af11f92b1575",
+      "name": "Setup loop variables"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "93eadf68-6cab-4bcb-92c0-186fa6446c8e",
+              "name": "images",
+              "value": "={{ $('Setup loop variables').last().json.images.slice(1) }}",
+              "type": "array"
+            },
+            {
+              "id": "1669e0f6-4a4c-4d76-aee7-ee544db28e73",
+              "name": "selected_images",
+              "value": "={{\n\n$json.text === \"Allowed\" ? \n  [...$('Setup loop variables').last().json.selected_images, $('Setup image for processing').last().json.image_for_processing.src] :\n  $('Setup loop variables').last().json.selected_images\n\n}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        -704
+      ],
+      "id": "c89bd2ae-377f-4f5f-8a40-60d7a9931202",
+      "name": "Update loop variables"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "92a8b8a3-59ed-4e2d-b652-d63b07b8ab59",
+              "name": "image_for_processing",
+              "value": "={{ $json.images[0] }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -656,
+        -800
+      ],
+      "id": "2a1cfae9-2d6c-4c72-856a-56850eefca3c",
+      "name": "Setup image for processing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9dec6eba-f1d6-4b7e-bd6e-a808358d44bf",
+              "leftValue": "={{ $json.image_for_processing.width }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -432,
+        -800
+      ],
+      "id": "581dcfbe-ae3b-43e5-97e2-13796fe0401d",
+      "name": "The image is large enough"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4dfe8c89-e1a3-4822-b442-009e514b97e8",
+              "name": "images",
+              "value": "={{ $('Setup loop variables').last().json.images.slice(1) }}",
+              "type": "array"
+            },
+            {
+              "id": "6dca0fae-b336-40be-a596-87511ef26e53",
+              "name": "selected_images",
+              "value": "={{ $('Setup loop variables').last().json.selected_images }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        -512
+      ],
+      "id": "6632f270-91d5-4c84-a696-198f983e06e9",
+      "name": "Skip item"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c8696b5c-288f-437f-ad0b-4c9e83cf7b28",
+              "leftValue": "={{ \n\n$json.selected_images.map(image => (u => u.split('?')[0].split('.').pop())(image)).includes('png')\n\n&&\n\n$json.selected_images.length >= 2 \n\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "fa369de6-0e9f-4c2a-a887-d73dfd957b2c",
+              "leftValue": "={{ \n\n!$json.selected_images.map(image => (u => u.split('?')[0].split('.').pop())(image)).includes('png')\n\n&& \n\n$json.selected_images.length >= 4 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "214cf419-6544-4c5c-a6ca-c1e8ff166f5d",
+              "leftValue": "={{ $json.images }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "array",
+                "operation": "lengthEquals",
+                "rightType": "number"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        -512
+      ],
+      "id": "c5a34c2c-108a-4625-a82c-880f6df6ecd2",
+      "name": "Did we reach the limit?"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "selected_images",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -496
+      ],
+      "id": "532dc16a-6f7a-4ee1-947c-42c91d5d2908",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5c137ab9-02fb-432d-b983-35a3ebf082db",
+              "leftValue": "={{ $json.selected_images }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "array",
+                "operation": "lengthEquals",
+                "rightType": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        -592
+      ],
+      "id": "78aaaa04-be5e-48c5-b92b-05a26902f863",
+      "name": "No usable image?"
+    },
+    {
+      "parameters": {
+        "errorMessage": "There was no usable image for the selected product"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        -752
+      ],
+      "id": "2c3ac20b-d6a6-4e4e-890f-ff3565b35f01",
+      "name": "No usable image error"
+    },
+    {
+      "parameters": {
+        "errorMessage": "No images found for the selected product"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        -832,
+        -976
+      ],
+      "id": "57a0edd0-9fb6-43cc-81b2-9489fc49b1a1",
+      "name": "No image error"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI system reviewing ecommerce product images. Your goal is to identify and flag images that contain significant explanatory or descriptive text overlaid on the image, such as labels, callouts, arrows with text, or UI elements that describe product features directly on the image (for example: \"Waist Tie-up\", \"Thread detailing\", \"Checkered pattern\", diagrams, or instructions).\n\nAllow for:\n\nSmall logos, watermarks, or brand signatures that are unobtrusive and do not describe product features.\nDo NOT allow:\n\nOverlaid text that explains, labels, or calls out product details/features, UI labels, instructions, or prominent text boxes/arrows on the main image content.\nYour output should be:\n\n\"Flagged\" if the image has any explanatory or callout text as described above.\n\"Allowed\" if the image only contains a logo, watermark, or signature.\nExamples:\n\nIf the image contains callouts like \"Checkered pattern\" or \"Thread detailing\" with arrows pointing to those features, respond with \"Flagged\".\nIf the only text is a small brand logo or signature, respond with \"Allowed\".",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "messageType": "imageUrl",
+              "imageUrl": "={{ $('Setup image for processing').item.json.image_for_processing.src }}",
+              "imageDetail": "high"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -16,
+        -800
+      ],
+      "id": "626870bd-a4a5-4468-8fed-9fd10a18234e",
+      "name": "Analyze image"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Setup defaults",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the products from the Shopify store": {
+      "main": [
+        [
+          {
+            "node": "For each product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup defaults": {
+      "main": [
+        [
+          {
+            "node": "Get the products from the Shopify store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate prompts",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Analyze image",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for the image": {
+      "main": [
+        [
+          {
+            "node": "Get the image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the image": {
+      "main": [
+        [
+          {
+            "node": "Image status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image status": {
+      "main": [
+        [
+          {
+            "node": "Download the image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for the image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for the image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download the image": {
+      "main": [
+        [
+          {
+            "node": "Start generating the video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start generating the image": {
+      "main": [
+        [
+          {
+            "node": "Wait for the image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup product": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for the video": {
+      "main": [
+        [
+          {
+            "node": "Get the video status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the video status": {
+      "main": [
+        [
+          {
+            "node": "Video status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video status": {
+      "main": [
+        [
+          {
+            "node": "Get the  video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for the video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for the video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start generating the video": {
+      "main": [
+        [
+          {
+            "node": "Wait for the video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the  video": {
+      "main": [
+        [
+          {
+            "node": "Set the voice based on sex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for the speech": {
+      "main": [
+        [
+          {
+            "node": "Get the speech status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the speech status": {
+      "main": [
+        [
+          {
+            "node": "Speech status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start generating the speech": {
+      "main": [
+        [
+          {
+            "node": "Wait for the speech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Speech status": {
+      "main": [
+        [
+          {
+            "node": "Get the speech",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for the speech",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for the speech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the speech": {
+      "main": [
+        [
+          {
+            "node": "Start generating the lipsync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start generating the lipsync": {
+      "main": [
+        [
+          {
+            "node": "Wait for the lipsync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for the lipsync": {
+      "main": [
+        [
+          {
+            "node": "Get the lipsync status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the lipsync status": {
+      "main": [
+        [
+          {
+            "node": "Lipsync status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lipsync status": {
+      "main": [
+        [
+          {
+            "node": "Get the lipsync video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for the lipsync",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for the lipsync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit loop variables": {
+      "main": [
+        [
+          {
+            "node": "Limits exceeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "For each product": {
+      "main": [
+        [
+          {
+            "node": "Edit loop variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limits exceeded?": {
+      "main": [
+        [
+          {
+            "node": "Select product",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Setup defaults",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select product": {
+      "main": [
+        [
+          {
+            "node": "Setup product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Close the form": {
+      "main": [
+        [
+          {
+            "node": "no images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download image": {
+      "main": [
+        [
+          {
+            "node": "Resize image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resize image": {
+      "main": [
+        [
+          {
+            "node": "Convert image to base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert image to base64": {
+      "main": [
+        [
+          {
+            "node": "Set base64 data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set base64 data": {
+      "main": [
+        [
+          {
+            "node": "Aggregate base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate base64": {
+      "main": [
+        [
+          {
+            "node": "Generate prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate prompts": {
+      "main": [
+        [
+          {
+            "node": "Start generating the image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser for prompt generation": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate prompts",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the lipsync video": {
+      "main": [
+        [
+          {
+            "node": "Download the video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set the voice based on sex": {
+      "main": [
+        [
+          {
+            "node": "Start generating the speech",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Close the form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "no images": {
+      "main": [
+        [
+          {
+            "node": "No image error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Setup loop variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup loop variables": {
+      "main": [
+        [
+          {
+            "node": "Setup image for processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup image for processing": {
+      "main": [
+        [
+          {
+            "node": "The image is large enough",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update loop variables": {
+      "main": [
+        [
+          {
+            "node": "Did we reach the limit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The image is large enough": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip item": {
+      "main": [
+        [
+          {
+            "node": "Did we reach the limit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Did we reach the limit?": {
+      "main": [
+        [
+          {
+            "node": "No usable image?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Setup loop variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Download image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No usable image?": {
+      "main": [
+        [
+          {
+            "node": "No usable image error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Update loop variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "065dc52b-10e6-457d-b045-460fc6dc6130",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "719db70b056f2f10d24bd5e4388aebb11b4375c631ec45a842053a65c944cdf1"
+  },
+  "id": "xFQcJLKV5AkY5sMc",
+  "tags": []
+}
